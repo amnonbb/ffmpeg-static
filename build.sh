@@ -42,16 +42,18 @@ cd $BUILD_DIR
 ../fetchurl "http://www.tortall.net/projects/yasm/releases/yasm-1.2.0.tar.gz"
 ../fetchurl "http://zlib.net/zlib-1.2.8.tar.gz"
 ../fetchurl "http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz"
+../fetchurl "http://alsa.cybermirror.org/lib/alsa-lib-1.0.27.2.tar.bz2"
 ../fetchurl "http://downloads.sf.net/project/libpng/libpng15/older-releases/1.5.14/libpng-1.5.14.tar.gz"
 ../fetchurl "http://downloads.xiph.org/releases/ogg/libogg-1.3.1.tar.gz"
 ../fetchurl "http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.3.tar.gz"
 ../fetchurl "http://downloads.xiph.org/releases/theora/libtheora-1.1.1.tar.bz2"
-../fetchurl "http://webm.googlecode.com/files/libvpx-v1.1.0.tar.bz2"
+../fetchurl "http://webm.googlecode.com/files/libvpx-v1.3.0.tar.bz2"
 ../fetchurl "http://downloads.sourceforge.net/project/faac/faac-src/faac-1.28/faac-1.28.tar.bz2"
 ../fetchurl "ftp://ftp.videolan.org/pub/x264/snapshots/last_x264.tar.bz2"
 ../fetchurl "http://downloads.xvid.org/downloads/xvidcore-1.3.2.tar.gz"
 ../fetchurl "http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz"
 ../fetchurl "http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz"
+../fetchurl "http://sourceforge.net/projects/opencore-amr/files/fdk-aac/fdk-aac-0.1.3.tar.gz"
 ../fetchurl "http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.11.tar.gz"
 ../fetchurl "http://www.ffmpeg.org/releases/ffmpeg-2.1.3.tar.bz2"
 
@@ -71,6 +73,12 @@ echo "*** Building bzip2 ***"
 cd $BUILD_DIR/bzip2*
 make
 make install PREFIX=$TARGET_DIR
+
+echo "*** Building alsa-lib ***"
+cd $BUILD_DIR/alsa*
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+make -j $jval
+make install
 
 echo "*** Building libpng ***"
 cd $BUILD_DIR/libpng*
@@ -126,6 +134,13 @@ make -j $jval
 make install
 #rm $TARGET_DIR/lib/libxvidcore.so.*
 
+echo "*** Building fdk-aac ***"
+cd $BUILD_DIR/fdk-aac
+autoreconf -fiv
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+make -j $jval
+make install
+
 echo "*** Building lame ***"
 cd $BUILD_DIR/lame*
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
@@ -144,6 +159,13 @@ cd $BUILD_DIR/freetype*
 make -j $jval
 make install
 
+echo "*** Building rtmpdump ***"
+cd $BUILD_DIR
+git clone https://github.com/svnpenn/rtmpdump.git
+cd $BUILD_DIR/rtmpdump
+make SYS=posix prefix=$TARGET_DIR XDEF=-DNO_SSL CRYPTO= SHARED=
+make SYS=posix prefix=$TARGET_DIR XDEF=-DNO_SSL CRYPTO= SHARED= install
+
 # FIXME: only OS-specific
 rm -f "$TARGET_DIR/lib/*.dylib"
 rm -f "$TARGET_DIR/lib/*.so"
@@ -151,5 +173,5 @@ rm -f "$TARGET_DIR/lib/*.so"
 # FFMpeg
 echo "*** Building FFmpeg ***"
 cd $BUILD_DIR/ffmpeg*
-CFLAGS="-I$TARGET_DIR/include" LDFLAGS="-L$TARGET_DIR/lib -lm" ./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-cflags="-I$TARGET_DIR/include -static" --extra-ldflags="-L$TARGET_DIR/lib -lm -static" --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --disable-ffplay --disable-ffserver --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-bzlib --enable-zlib --enable-nonfree --enable-version3 --enable-libfreetype --enable-libvpx --disable-devices
+CFLAGS="-I$TARGET_DIR/include " LDFLAGS="-L$TARGET_DIR/lib -lm -ldl -lc -lstdc++" ./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-bzlib --enable-zlib --enable-nonfree --enable-libfdk_aac --enable-version3 --enable-libfreetype --enable-libvpx --enable-librtmp
 make -j $jval && make install
